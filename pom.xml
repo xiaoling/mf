@@ -147,7 +147,7 @@
                             <id>factorize</id>
                             <mainClass>org.sameersingh.mf.FactorizeMatrix</mainClass>
                             <jvmArgs>
-                                <jvmArg>-Xmx6g</jvmArg>
+                                <jvmArg>-Xmx24g</jvmArg>
                             </jvmArgs>
                         </launcher>
                     </launchers>

@@ -10,14 +10,16 @@ import org.sameersingh.utils.timing.TimeUtil
 object FactorizeMatrix extends App {
   implicit val random = new Random(0)
   implicit val cache = new Cache
-  val baseDir = "/Users/sameer/Work/data/entity-embedding/"
-  val filename = baseDir + "tac12.th3.profiles.gz"
-  val rOutputFilename = baseDir + "mf_output/entity_profiles.gz"
-  val cOutputFilename = baseDir + "mf_output/verb_profiles.gz"
-  val pruneRows = 1
-  val pruneCols = 1
+  val baseDir = "/projects/pardosa/s2/xiaoling/profiles/" // "/Users/sameer/Work/data/entity-embedding/"
+  val sig = "th5_vlf"
+//  val sig = "test"
+  val filename = baseDir + sig + ".pm.gz" // "tac12.th3.profiles.gz"
+  val rOutputFilename = baseDir + "mf_output/" + sig + "_tp_0.99.e.gz"
+  val cOutputFilename = baseDir + "mf_output/" + sig + "_tp_0.99.v.gz"
+  val pruneRows = 10
+  val pruneCols = 10
   TimeUtil.init
-  val original = MatrixLoader.loadFile(filename, "M", 0.8, true)
+  val original = MatrixLoader.loadFile(filename, "M", 0.99, true)
   TimeUtil.snapshot(original.toString)
   val m = Matrix.prune(original, pruneRows, pruneCols)
   val numZeroCells = (m.testCells.size / 10)
@@ -33,8 +35,8 @@ object FactorizeMatrix extends App {
   params += c
   params(r, "bias") = (() => random.nextGaussian() / 100.0)
   params(c, "bias") = (() => random.nextGaussian() / 100.0)
-  params(r, "L2RegCoeff") = 0.1
-  params(c, "L2RegCoeff") = 0.1
+  params(r, "L2RegCoeff") = 100
+  params(c, "L2RegCoeff") = 100
   // objective terms
   val dotValue = new DotValue(params, "r", "c", m) with LogisticDot
   val term = new DotL2(params, dotValue, 1.0)
@@ -58,7 +60,7 @@ object FactorizeMatrix extends App {
   }
   val eval = Evaluators(nll, f1, l2, hamming)
 
-  for (i <- 0 until 500) {
+  for (i <- 0 until 10) {
     println("-----------------------")
     println("        ROUND %d" format (i + 1))
     println("-----------------------")
@@ -67,9 +69,13 @@ object FactorizeMatrix extends App {
     TimeUtil.snapshot("L2 C value     : " + l2c.value / l2c.weight())
     trainer.round(0.01)
     TimeUtil.snapshot("Round done.")
+    // println("cos(48830, 14849) ="+ cos(r.get("48830"), r.get("14849")))
+      
+    if ( i >= 9 ) {
     DoubleDenseMatrix.save(r, rOutputFilename + (i % 5), true)
     DoubleDenseMatrix.save(c, cOutputFilename + (i % 5), true)
     TimeUtil.snapshot("Matrices written")
+    }
   }
   println("-----------------------")
   println("        FINAL")
